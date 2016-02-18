@@ -72,44 +72,49 @@ import java.text.DecimalFormat
 import groovy.json.JsonSlurper
 
 // Wink API stuff
-private apiUrl() 			{ "https://winkapi.quirky.com/" }
+private apiUrl() 		{ "https://winkapi.quirky.com/" }
 private getVendorName() 	{ "Quirky Wink" }
 private getVendorAuthPath()	{ "https://winkapi.quirky.com/oauth2/authorize?" }
-private getVendorTokenPath(){ "https://winkapi.quirky.com/oauth2/token?" }
+private getVendorTokenPath()	{ "https://winkapi.quirky.com/oauth2/token?" }
 private getVendorIcon()		{ "https://s3.amazonaws.com/smartapp-icons/Partner/quirky@2x.png" }
-private getClientId() 		{ "c22d82a7fc3d6faf06dcff1bcf0feb52" } // Dan Lieberman's
-private getClientSecret() 	{ "bd44c524a1df9dce134235d174350603" }
-
-private getServerUrl() 		{ "https://graph.api.smartthings.com" }
+private getClientId() 		{ appSettings.clientId }
+private getClientSecret() 	{ appSettings.clientSecret }
+private getServerUrl() 		{ appSettings.serverUrl }
 
 
 // Automatically generated. Make future change here.
 definition(
     name: "Quirky (Connect)",
     namespace: "wilbur4321",
-    author: "SmartThings",
+    author: "Todd Wackford",
     description: "Connect your Quirky to SmartThings.",
-    category: "SmartThings Labs",
+    category: "My Apps",
     iconUrl: "https://s3.amazonaws.com/smartapp-icons/Partner/quirky.png",
     iconX2Url: "https://s3.amazonaws.com/smartapp-icons/Partner/quirky@2x.png",
     oauth: true
-)
+) {
+    appSetting "clientId"
+    appSetting "clientSecret"
+    appSetting "serverUrl"
+    appSetting "vendorAccessToken"
+    appSetting "vendorRefreshToken"
+}
 
 mappings {
-	path("/receivedToken") 			{ action:[ POST: "receivedToken", 				GET: "receivedToken"] }
-	path("/receiveToken") 			{ action:[ POST: "receiveToken", 				GET: "receiveToken"] }
+    path("/receivedToken") 			{ action:[ POST: "receivedToken", 				GET: "receivedToken"] }
+    path("/receiveToken") 			{ action:[ POST: "receiveToken", 				GET: "receiveToken"] }
     path("/propaneTankCallback")	{ action:[ POST: "propaneTankEventHandler",		GET: "subscriberIdentifyVerification"]}
     path("/airConditionerCallback")	{ action:[ POST: "airConditionerEventHandler",	GET: "subscriberIdentifyVerification"]}
-	path("/powerstripCallback")		{ action:[ POST: "powerstripEventHandler",		GET: "subscriberIdentifyVerification"]}
-	path("/sensor_podCallback") 	{ action:[ POST: "sensor_podEventHandler",		GET: "subscriberIdentifyVerification"]}
-	path("/piggy_bankCallback") 	{ action:[ POST: "piggy_bankEventHandler",		GET: "subscriberIdentifyVerification"]}
-	path("/eggtrayCallback") 		{ action:[ POST: "eggtrayEventHandler",			GET: "subscriberIdentifyVerification"]}
-	path("/cloud_clockCallback")	{ action:[ POST: "cloud_clockEventHandler", 	GET: "subscriberIdentifyVerification"]}
+    path("/powerstripCallback")		{ action:[ POST: "powerstripEventHandler",		GET: "subscriberIdentifyVerification"]}
+    path("/sensor_podCallback") 	{ action:[ POST: "sensor_podEventHandler",		GET: "subscriberIdentifyVerification"]}
+    path("/piggy_bankCallback") 	{ action:[ POST: "piggy_bankEventHandler",		GET: "subscriberIdentifyVerification"]}
+    path("/eggtrayCallback") 		{ action:[ POST: "eggtrayEventHandler",			GET: "subscriberIdentifyVerification"]}
+    path("/cloud_clockCallback")	{ action:[ POST: "cloud_clockEventHandler", 	GET: "subscriberIdentifyVerification"]}
 }
 
 preferences {
     page(name: "Credentials", title: "Fetch OAuth2 Credentials", content: "authPage", install: false)
-	page(name: "listDevices", title: "Quirky Devices", content: "listDevices", install: false)    
+    page(name: "listDevices", title: "Quirky Devices", content: "listDevices", install: false)    
 }
 
 def installed() {
@@ -427,7 +432,7 @@ def createWinkSubscription(path, suffix)
 		uri : apiUrl(),
 		path: path,
 		body: ['callback': callbackUrl],
-		headers : ['Authorization' : 'Bearer ' + state.vendorAccessToken]
+		headers : ['Authorization' : 'Bearer ' + appSettings.vendorAccessToken] //state.vendorAccessToken
 	],)
 	{ 	response ->
 		log.debug "Created subscription ID ${response.data.data.subscription_id}"
@@ -535,7 +540,7 @@ def deleteWinkSubscription(path, subscriptionId)
 	httpDelete([
 		uri : apiUrl(),
 		path: path + subscriptionId,
-		headers : [ 'Authorization' : 'Bearer ' + state.vendorAccessToken ]
+		headers : [ 'Authorization' : 'Bearer ' + appSettings.vendorAccessToken ] //state.vendorAccessToken
 	],)
 	{	response ->
 		log.debug "Subscription ${subscriptionId} deleted"
@@ -559,7 +564,7 @@ def checkToken() {
     try {
     	httpGet([ uri		: apiUrl(),
     		  	  path 		: "/users/me/wink_devices",
-               	  headers 	: [ 'Authorization' : 'Bearer ' + state.vendorAccessToken ]
+               	  headers 	: [ 'Authorization' : 'Bearer ' + appSettings.vendorAccessToken ] //state.vendorAccessToken
 		])
 		{ response ->
         	debugOut "Response is: ${response.status}"
@@ -580,7 +585,7 @@ def checkToken() {
     	def tokenParams = [ client_id		: getClientId(),
         					client_secret	: getClientSecret(),
 							grant_type		: "refresh_token",
-							refresh_token	: state.vendorRefreshToken ]
+							refresh_token	: appSettings.vendorRefreshToken ] //state.vendorRefreshToken
 
 		def tokenUrl = getVendorTokenPath() + toQueryString(tokenParams)
         
@@ -626,7 +631,7 @@ def apiGet(String path, Closure callback)
 	httpGet([
 		uri : apiUrl(),
 		path : path,
-		headers : [ 'Authorization' : 'Bearer ' + state.vendorAccessToken ]
+		headers : [ 'Authorization' : 'Bearer ' + appSettings.vendorAccessToken ] //state.vendorAccessToken
 	])
 	{
 		response ->
@@ -653,7 +658,7 @@ def apiPut(String path, cmd, Closure callback)
 		uri : apiUrl(),
 		path: path,
 		body: cmd,
-		headers : [ 'Authorization' : 'Bearer ' + state.vendorAccessToken ]
+		headers : [ 'Authorization' : 'Bearer ' + appSettings.vendorAccessToken ] //state.vendorAccessToken
 	])
 
 	{
@@ -1287,7 +1292,7 @@ def authPage() {
 	if(canInstallLabs()) {
 		def description = null
 
-		if (state.vendorAccessToken == null) {
+		if (appSettings.vendorAccessToken == null) { //state.vendorAccessToken
 			log.debug "About to create access token."
 
 			createAccessToken()
@@ -1361,15 +1366,17 @@ def receiveToken() {
 	/* OAuth Step 2: Request access token with our client Secret and OAuth "Code" */
 	try
     { 
-    	httpPost(params) { response ->
+    	//httpPost(params) { response ->
 
-			def data = response.data.data
+			//def data = response.data.data
 
-			state.vendorRefreshToken = data.refresh_token //these may need to be adjusted depending on depth of returned data
-			state.vendorAccessToken = data.access_token
-        	log.debug "Vendor Access Token: ${state.vendorAccessToken}"
+			//state.vendorRefreshToken = data.refresh_token //these may need to be adjusted depending on depth of returned data
+			//state.vendorAccessToken = data.access_token
+        	state.vendorRefreshToken = appSettings.vendorRefreshToken
+            state.vendorAccessToken = appSettings.vendorAccessToken
+            log.debug "Vendor Access Token: ${state.vendorAccessToken}"
 			log.debug "Vendor Refresh Token: ${state.vendorRefreshToken}"
-		}
+		//}
     }
     catch(Exception e)
     {
