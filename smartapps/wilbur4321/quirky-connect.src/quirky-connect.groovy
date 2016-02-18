@@ -1268,11 +1268,6 @@ def pollAros(childDevice)
 // HUB STUFF
 ///////////////////////
 
-private Boolean canInstallLabs()
-{
-	return hasAllHubsOver("000.011.00603")
-}
-
 private Boolean hasAllHubsOver(String desiredFirmware)
 {
 	return realHubFirmwareVersions.every { fw -> fw >= desiredFirmware }
@@ -1289,43 +1284,29 @@ private List getRealHubFirmwareVersions()
 
 def authPage() {
 	log.debug "In authPage"
-	if(canInstallLabs()) {
-		def description = null
 
-		if (appSettings.vendorAccessToken == null) { //state.vendorAccessToken
-			log.debug "About to create access token."
+    def description = null
 
-			createAccessToken()
-			description = "Tap to enter Credentials."
+    if (appSettings.vendorAccessToken == null) { //state.vendorAccessToken
+        log.debug "About to create access token."
 
-			def redirectUrl = oauthInitUrl()
+        createAccessToken()
+        description = "Tap to enter Credentials."
 
-
-			return dynamicPage(name: "Credentials", title: "Authorize Connection", nextPage:"listDevices", uninstall: true, install:false) {
-				section { href url:redirectUrl, style:"embedded", required:false, title:"Connect to ${getVendorName()}:", description:description }
-			}
-		} else {
-        
-			description = "Tap 'Next' to proceed"
-
-			return dynamicPage(name: "Credentials", title: "Credentials Accepted!", nextPage:"listDevices", uninstall: true, install:false) {
-				section { href url: buildRedirectUrl("receivedToken"), style:"embedded", required:false, title:"${getVendorName()} is now connected to SmartThings!", description:description }
-			}
-		}
-	}
-	else
-	{
-		def upgradeNeeded = """Before you can participate in SmartThings Labs we need to update your hub.
-
-Please contact our support team at labs@smartthings.com and tell them you want access to SmartThings Labs!"""
+        def redirectUrl = oauthInitUrl()
 
 
-		return dynamicPage(name:"Credentials", title:"Upgrade needed!", nextPage:"", install:false, uninstall: true) {
-			section {
-				paragraph "$upgradeNeeded"
-			}
-		}
-	}
+        return dynamicPage(name: "Credentials", title: "Authorize Connection", nextPage:"listDevices", uninstall: true, install:false) {
+            section { href url:redirectUrl, style:"embedded", required:false, title:"Connect to ${getVendorName()}:", description:description }
+        }
+    } else {
+    
+        description = "Tap 'Next' to proceed"
+
+        return dynamicPage(name: "Credentials", title: "Credentials Accepted!", nextPage:"listDevices", uninstall: true, install:false) {
+            section { href url: buildRedirectUrl("receivedToken"), style:"embedded", required:false, title:"${getVendorName()} is now connected to SmartThings!", description:description }
+        }
+    }
 }
 
 def oauthInitUrl() {
