@@ -1,4 +1,4 @@
-/*  Quirky-Wink-Powerstrip-Device.groovy
+/*  Quirky Pivot Power Genius
  *
  *  Author: todd@wackford.net
  *  Date: 2014-01-28
@@ -27,16 +27,13 @@
  *                       Code
  *****************************************************************
  */
-// for the UI
+ // for the UI
 metadata {
-
-	definition(name:"Quirky Wink Powerstrip", namespace:"wackford", author:"Todd Wackford") {
-
-		capability "Switch"
-		capability "Polling"
+	// Automatically generated. Make future change here.
+	definition (name: "Quirky Pivot Power Genius", namespace: "wackford", author: "todd@wackford.net", oauth: true) {
 		capability "Refresh"
-		capability "Sensor"
-		capability "Actuator"
+		capability "Polling"
+        capability "Switch"
 	}
 
 	simulator {
@@ -45,15 +42,15 @@ metadata {
 
 	tiles {
 		standardTile("switch", "device.switch", width: 2, height: 2, canChangeIcon: true) {
-			state "off", label: '${name}', action: "switch.on", icon: "st.switches.switch.off", backgroundColor: "#ffffff"
-			state "on", label: '${name}', action: "switch.off", icon: "st.switches.switch.on", backgroundColor: "#79b821"
+			state "off", label: '${name}', action: "switch.on", icon: "st.quirky.pivot-genius.quirky-pivot-off", backgroundColor: "#ffffff"
+            state "on", label: '${name}', action: "switch.off", icon: "st.quirky.pivot-genius.quirky-pivot-on", backgroundColor: "#79b821"	
 		}
-		standardTile("refresh", "device.refresh", inactiveLabel: false, decoration: "flat") {
+        standardTile("refresh", "device.refresh", inactiveLabel: false, decoration: "flat") {
 			state "default", action:"refresh.refresh", icon:"st.secondary.refresh"
 		}
 	}
 	main(["switch"])
-	details(["switch", "refresh" ])
+    details(["switch", "refresh" ])
 }
 
 
@@ -61,7 +58,10 @@ metadata {
 def parse(description) {
 	log.debug "parse() - $description"
 	def results = []
-
+	
+    if ( description == "updated" ) on initial install we are returned just a string
+    	return
+        
 	if (description?.name && description?.value)
 	{
 		results << sendEvent(name: "${description?.name}", value: "${description?.value}")
@@ -72,13 +72,18 @@ def parse(description) {
 // handle commands
 def on() {
 	log.debug "Executing 'on'"
-	log.debug this
+    log.debug this
 	parent.on(this)
 }
 
 def off() {
 	log.debug "Executing 'off'"
 	parent.off(this)
+}
+
+def uninstalled() {
+	log.debug "Executing 'uninstall' in child"
+    parent.uninstallChildDevice(this)
 }
 
 def poll() {
@@ -88,5 +93,8 @@ def poll() {
 
 def refresh() {
 	log.debug "Executing 'refresh'"
-	poll()
+	parent.pollOutlet(this)
 }
+
+
+
