@@ -412,7 +412,7 @@ def createChildDevice(deviceFile, dni, name, label)
         
 		if(!existingDevice) {
 			log.debug "Creating child"
-			def childDevice = addChildDevice(app.namespace, deviceFile, dni, null, [name: name, label: label, completedSetup: true])
+			def childDevice = addChildDevice("wackford", deviceFile, dni, null, [name: name, label: label, completedSetup: true])
 		} else {
 			log.debug "Device $dni already exists"
 		}
