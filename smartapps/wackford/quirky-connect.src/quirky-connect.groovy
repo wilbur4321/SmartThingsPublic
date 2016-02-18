@@ -93,9 +93,6 @@ definition(
     iconX2Url: "https://s3.amazonaws.com/smartapp-icons/Partner/quirky@2x.png",
     oauth: true
 ) {
-    appSetting "clientId"
-    appSetting "clientSecret"
-    appSetting "serverUrl"
     appSetting "vendorAccessToken"
     appSetting "vendorRefreshToken"
 }
